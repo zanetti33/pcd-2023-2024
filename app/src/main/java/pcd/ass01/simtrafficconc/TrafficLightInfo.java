@@ -12,7 +12,7 @@ public class TrafficLightInfo {
         this.roadPos = roadPos1;
     }
 
-    public TrafficLight getSem() {
+    public synchronized TrafficLight getSem() {
         return sem;
     }
 

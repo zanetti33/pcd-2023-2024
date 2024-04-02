@@ -92,8 +92,8 @@ public class RoadsEnv extends AbstractEnvironment {
 		return 
 				road.getTrafficLights()
 				.stream()
-				.filter((TrafficLightInfo tl) -> tl.roadPos() > carPos)
-				.min((c1, c2) -> (int) Math.round(c1.roadPos() - c2.roadPos()));
+				.filter((TrafficLightInfo tl) -> tl.getRoadPos() > carPos)
+				.min((c1, c2) -> (int) Math.round(c1.getRoadPos() - c2.getRoadPos()));
 	}
 	
 	
