@@ -2,14 +2,13 @@ package pcd.ass01.simtrafficexamples;
 
 import java.util.Random;
 
-import pcd.ass01.simengineseq.AbstractSimulation;
-import pcd.ass01.simtrafficbase.CarAgent;
-import pcd.ass01.simtrafficbase.CarAgentExtended;
-import pcd.ass01.simtrafficbase.P2d;
-import pcd.ass01.simtrafficbase.Road;
-import pcd.ass01.simtrafficbase.RoadsEnv;
-import pcd.ass01.simtrafficbase.TrafficLight;
-import pcd.ass01.simtrafficbase.TrafficLight.TrafficLightState;
+import pcd.ass01.simengineconc.AbstractSimulation;
+import pcd.ass01.simtrafficconc.CarAgent;
+import pcd.ass01.simtrafficconc.CarAgentExtended;
+import pcd.ass01.simtrafficconc.P2d;
+import pcd.ass01.simtrafficconc.Road;
+import pcd.ass01.simtrafficconc.RoadsEnv;
+import pcd.ass01.simtrafficconc.TrafficLight;
 
 public class TrafficSimulationWithCrossRoads extends AbstractSimulation {
 

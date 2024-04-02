@@ -1,4 +1,4 @@
-package pcd.ass01.simtrafficbase;
+package pcd.ass01.simtrafficconc;
 
 public class CarAgentInfo {
 
@@ -12,7 +12,7 @@ public class CarAgentInfo {
 		this.pos = pos;
 	}
 	
-	public double getPos() {
+	public synchronized double getPos() {
 		return pos;
 	}
 	
@@ -24,7 +24,7 @@ public class CarAgentInfo {
 		return car;
 	}	
 	
-	public Road getRoad() {
+	public synchronized Road getRoad() {
 		return road;
 	}
 }

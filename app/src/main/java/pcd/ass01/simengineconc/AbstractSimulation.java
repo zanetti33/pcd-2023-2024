@@ -1,4 +1,4 @@
-package pcd.ass01.simengineseq;
+package pcd.ass01.simengineconc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +17,9 @@ public abstract class AbstractSimulation {
 	
 	/* simulation listeners */
 	private List<SimulationListener> listeners;
+
+	/* simulation threads */
+	private List<EngineThread> engineThreads;
 
 	/* logical time step */
 	private int dt;
@@ -71,16 +74,35 @@ public abstract class AbstractSimulation {
 		long timePerStep = 0;
 		int nSteps = 0;
 
+		int agentsN = agents.size();
+		int agentsForThread = agentsN / 8;
+		for (int i=0; i<8; i++) {
+			engineThreads.add(new EngineThread(agents.subList(i * agentsForThread, (i+1) * agentsForThread)));
+		}
+
 		while (nSteps < numSteps) {
 
 			currentWallTime = System.currentTimeMillis();
-		
+
 			/* make a step */
-			
+
 			env.step(dt);
-			for (var agent: agents) {
+
+			/*for (var agent: agents) {
 				agent.step(dt);
+			}*/
+			for (EngineThread engineThread : engineThreads) {
+				engineThread.setDt(dt);
+				engineThread.start();
 			}
+			for (EngineThread engineThread : engineThreads) {
+                try {
+                    engineThread.join();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
 			t += dt;
 			
 			notifyNewStep(t, agents, env);
