@@ -3,12 +3,15 @@ package pcd.ass01.simengineconc;
 import java.util.ArrayList;
 import java.util.List;
 
+import static pcd.ass01.simengineconc.Logger.log;
+
 /**
  * Base class for defining concrete simulations
  *  
  */
 public abstract class AbstractSimulation {
 
+	private static final String MAIN_THREAD_NAME = "Main Thread";
 	/* environment of the simulation */
 	private AbstractEnvironment env;
 	
@@ -70,21 +73,20 @@ public abstract class AbstractSimulation {
 
 		this.agentsThreads = new ArrayList<>();
 		int numberOfAgents = agents.size();
-		int numberOfThreads = Runtime.getRuntime().availableProcessors();
-		int agentsForThread = numberOfAgents / numberOfThreads;
-		int reminder = numberOfAgents % numberOfThreads;
-        /* events board */
-        this.eventsBoard = new EventsBoardImpl(numSteps, numberOfThreads);
+		int numberOfProcessors = Runtime.getRuntime().availableProcessors();
+		int numberOfThreads;
 		// with less agents than thread we start less thread
 		// (same number as agents) with one agent per thread
-		if (numberOfAgents < numberOfThreads) {
-			for (AbstractAgent a : agents) {
+		if (numberOfAgents < numberOfProcessors) {
+			numberOfThreads = numberOfAgents;
+			/* events board */
+			this.eventsBoard = new EventsBoardImpl(numSteps, numberOfThreads);
+			for (int i=0; i<numberOfAgents; i++) {
 				agentsThreads.add(
 						new EngineThreads(
 								this.env,
-								List.of(a),
-								numSteps,
-                                this.eventsBoard
+								agents.subList(i, i+1),
+								this.eventsBoard
 						)
 				);
 			}
@@ -92,8 +94,13 @@ public abstract class AbstractSimulation {
 			// with number of agents >= number of thread we split the number of
 			// agents evenly between the enginge threads
 			int assignedAgents = 0;
+			numberOfThreads = numberOfProcessors;
+			/* events board */
+			this.eventsBoard = new EventsBoardImpl(numSteps, numberOfThreads);
 			for (int i=0; i<numberOfThreads; i++) {
 				int startIndex = assignedAgents;
+				int agentsForThread = numberOfAgents / numberOfThreads;
+				int reminder = numberOfAgents % numberOfThreads;
 				int endIndex = assignedAgents + agentsForThread;
 				if (reminder > 0) {
 					endIndex++;
@@ -104,8 +111,7 @@ public abstract class AbstractSimulation {
 						new EngineThreads(
 								this.env,
 								agents,
-								numSteps,
-                                this.eventsBoard
+								this.eventsBoard
 						)
 				);
 				assignedAgents += (endIndex - startIndex);
@@ -113,9 +119,11 @@ public abstract class AbstractSimulation {
 		}
 
 		env.init();
+		log(this.getName(), "Init done");
 		for (EngineThreads at : agentsThreads) {
 			at.start();
 		}
+		this.eventsBoard.waitInitEnd();
 
 		long timePerStep = 0;
 		int nSteps = 0;
@@ -124,13 +132,14 @@ public abstract class AbstractSimulation {
 			currentWallTime = System.currentTimeMillis();
 
 			env.step(dt);
+			log(this.getName(), "Env step done");
 
 			// when env step is over we notify agents to start
 			this.eventsBoard.notifyStepStart(dt);
 
-			t += dt;
-
 			this.eventsBoard.waitStepEnd();
+
+			t += dt;
 			updateView(t, agents, env);
 
 			nSteps++;
@@ -147,6 +156,10 @@ public abstract class AbstractSimulation {
 
 		this.endWallTime = System.currentTimeMillis();
 		this.averageTimePerStep = timePerStep / numSteps;
+	}
+
+	private String getName() {
+		return MAIN_THREAD_NAME;
 	}
 
 	public long getSimulationDuration() {
