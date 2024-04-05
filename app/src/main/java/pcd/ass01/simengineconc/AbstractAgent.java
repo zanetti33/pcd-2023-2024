@@ -1,5 +1,7 @@
 package pcd.ass01.simengineconc;
 
+import java.util.Optional;
+
 /**
  * 
  * Base  class for defining types of agents taking part to the simulation
@@ -27,14 +29,13 @@ public abstract class AbstractAgent {
 	public void init(AbstractEnvironment env) {
 		this.env = env;
 	}
-	
-	/**
-	 * This method is called at each step of the simulation
-	 * 
-	 * @param dt - logical time step
-	 */
-	abstract public void step(int dt);
-	
+
+	abstract public Percept sense();
+
+	abstract public Optional<Action> decide(int dt, Percept percept);
+
+	abstract public void act(Optional<Action> action);
+
 
 	public String getId() {
 		return myId;

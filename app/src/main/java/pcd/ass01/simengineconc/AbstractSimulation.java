@@ -21,6 +21,9 @@ public abstract class AbstractSimulation {
 	/* simulation threads */
 	private List<EngineThread> engineThreads;
 
+	/* events board */
+	private EventsBoard eventsBoard;
+
 	/* logical time step */
 	private int dt;
 	
@@ -36,7 +39,6 @@ public abstract class AbstractSimulation {
 	private long startWallTime;
 	private long endWallTime;
 	private long averageTimePerStep;
-
 
 	protected AbstractSimulation() {
 		agents = new ArrayList<AbstractAgent>();
@@ -74,10 +76,44 @@ public abstract class AbstractSimulation {
 		long timePerStep = 0;
 		int nSteps = 0;
 
-		int agentsN = agents.size();
-		int agentsForThread = agentsN / 8;
-		for (int i=0; i<8; i++) {
-			engineThreads.add(new EngineThread(agents.subList(i * agentsForThread, (i+1) * agentsForThread)));
+		int numberOfAgents = agents.size();
+		int numberOfThreads = Runtime.getRuntime().availableProcessors();
+		int agentsForThread = numberOfAgents / numberOfThreads;
+		int reminder = numberOfAgents % numberOfThreads;
+		this.eventsBoard = new EventsBoardImpl(numSteps);
+		// with less agents than thread we start less thread
+		// (same number as agents) with one agent per thread
+		if (numberOfAgents < numberOfThreads) {
+			for (AbstractAgent a : agents) {
+				engineThreads.add(
+						new EngineThread(
+								List.of(a),
+								numSteps,
+								this.eventsBoard
+						)
+				);
+			}
+		} else {
+			// with number of agents >= number of thread we split the number of
+			// agents evenly between the enginge threads
+			int assignedAgents = 0;
+			for (int i=0; i<numberOfThreads; i++) {
+				int startIndex = assignedAgents;
+				int endIndex = assignedAgents + agentsForThread;
+				if (reminder > 0) {
+					endIndex++;
+					reminder--;
+				}
+				List<AbstractAgent> agents = this.agents.subList(startIndex, endIndex);
+				engineThreads.add(
+						new EngineThread(
+								agents,
+								numSteps,
+								this.eventsBoard
+						)
+				);
+				assignedAgents += (endIndex - startIndex);
+			}
 		}
 
 		while (nSteps < numSteps) {
@@ -91,17 +127,6 @@ public abstract class AbstractSimulation {
 			/*for (var agent: agents) {
 				agent.step(dt);
 			}*/
-			for (EngineThread engineThread : engineThreads) {
-				engineThread.setDt(dt);
-				engineThread.start();
-			}
-			for (EngineThread engineThread : engineThreads) {
-                try {
-                    engineThread.join();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
 
 			t += dt;
 			

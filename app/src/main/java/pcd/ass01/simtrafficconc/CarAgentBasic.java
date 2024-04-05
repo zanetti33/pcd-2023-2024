@@ -1,5 +1,8 @@
 package pcd.ass01.simtrafficconc;
 
+import pcd.ass01.simengineconc.Action;
+import pcd.ass01.simengineconc.Percept;
+
 import java.util.Optional;
 
 /**
@@ -41,14 +44,15 @@ public class CarAgentBasic extends CarAgent {
 	 * Behaviour defined by a simple finite state machine 
 	 *
 	 */
-	protected void decide(int dt) {
+	public Optional<Action> decide(int dt, Percept percept) {
+		this.currentPercept = (CarPercept) percept;
 		switch (state) {
-		case CarAgentState.STOPPED:
+		case STOPPED:
 			if (!detectedNearCar()) {
 				state = CarAgentState.ACCELERATING;
 			}
 			break;
-		case CarAgentState.ACCELERATING:
+		case ACCELERATING:
 			if (detectedNearCar()) {
 				state = CarAgentState.DECELERATING_BECAUSE_OF_A_CAR;
 			} else {
@@ -58,12 +62,12 @@ public class CarAgentBasic extends CarAgent {
 				}			
 			}
 			break;
-		case CarAgentState.MOVING_CONSTANT_SPEED:
+		case MOVING_CONSTANT_SPEED:
 			if (detectedNearCar()) {
 				state = CarAgentState.DECELERATING_BECAUSE_OF_A_CAR;
 			} 
 			break;
-		case CarAgentState.DECELERATING_BECAUSE_OF_A_CAR:
+		case DECELERATING_BECAUSE_OF_A_CAR:
 			this.currentSpeed -= deceleration * dt;
 			if (this.currentSpeed <= 0) {
 				state =  CarAgentState.STOPPED;
@@ -72,7 +76,7 @@ public class CarAgentBasic extends CarAgent {
 				waitingTime = 0;
 			}
 			break;
-		case CarAgentState.WAIT_A_BIT:
+		case WAIT_A_BIT:
 			waitingTime += dt;
 			if (waitingTime > MAX_WAITING_TIME) {
 				state = CarAgentState.ACCELERATING;
@@ -80,10 +84,9 @@ public class CarAgentBasic extends CarAgent {
 			break;
 		}
 		
-		if (currentSpeed > 0) {
-			selectedAction = Optional.of(new MoveForward(currentSpeed * dt));
-		}
-
+		return currentSpeed > 0 ?
+				Optional.of(new MoveForward(currentSpeed * dt)) :
+				Optional.empty();
 	}
 	
 	/* aux methods */

@@ -5,6 +5,7 @@ import java.util.Optional;
 import pcd.ass01.simengineconc.AbstractAgent;
 import pcd.ass01.simengineconc.AbstractEnvironment;
 import pcd.ass01.simengineconc.Action;
+import pcd.ass01.simengineconc.Percept;
 
 /**
  * 
@@ -41,24 +42,28 @@ public abstract class CarAgent extends AbstractAgent {
 	 * Basic behaviour of a car agent structured into a sense/decide/act structure 
 	 * 
 	 */
+	/*
 	public void step(int dt) {
 
-		/* sense */
-
 		AbstractEnvironment env = this.getEnv();
-		currentPercept = (CarPercept) env.getCurrentPercepts(getId());			
-
-		/* decide */
+		currentPercept = (CarPercept) env.getCurrentPercepts(getId());
 		
 		selectedAction = Optional.empty();
 		
 		decide(dt);
 		
-		/* act */
-		
 		if (selectedAction.isPresent()) {
 			env.doAction(getId(), selectedAction.get());
 		}
+	}
+	*/
+
+	public Percept sense() {
+		return this.getEnv().getCurrentPercepts(getId());
+	}
+
+	public void act(Optional<Action> action) {
+		action.ifPresent(value -> this.getEnv().doAction(getId(), value));
 	}
 	
 	/**
@@ -67,7 +72,6 @@ public abstract class CarAgent extends AbstractAgent {
 	 * 
 	 * @param dt
 	 */
-	protected abstract void decide(int dt);
 	
 	public double getCurrentSpeed() {
 		return currentSpeed;
