@@ -19,12 +19,12 @@ public abstract class AbstractSimulation {
 	private List<SimulationListener> listeners;
 
 	/* simulation threads */
-	private List<EngineThread> engineThreads;
+	private List<EngineThreads> agentsThreads;
 
-	/* events board */
+	/* event board */
 	private EventsBoard eventsBoard;
 
-	/* logical time step */
+    /* logical time step */
 	private int dt;
 	
 	/* initial logical time */
@@ -55,7 +55,7 @@ public abstract class AbstractSimulation {
 	
 	/**
 	 * Method running the simulation for a number of steps,
-	 * using a sequential approach
+	 * using a concurrent approach
 	 * 
 	 * @param numSteps
 	 */
@@ -66,30 +66,25 @@ public abstract class AbstractSimulation {
 		/* initialize the env and the agents inside */
 		int t = t0;
 
-		env.init();
-		for (var a: agents) {
-			a.init(env);
-		}
-
 		this.notifyReset(t, agents, env);
 
-		long timePerStep = 0;
-		int nSteps = 0;
-
+		this.agentsThreads = new ArrayList<>();
 		int numberOfAgents = agents.size();
 		int numberOfThreads = Runtime.getRuntime().availableProcessors();
 		int agentsForThread = numberOfAgents / numberOfThreads;
 		int reminder = numberOfAgents % numberOfThreads;
-		this.eventsBoard = new EventsBoardImpl(numSteps);
+        /* events board */
+        this.eventsBoard = new EventsBoardImpl(numSteps, numberOfThreads);
 		// with less agents than thread we start less thread
 		// (same number as agents) with one agent per thread
 		if (numberOfAgents < numberOfThreads) {
 			for (AbstractAgent a : agents) {
-				engineThreads.add(
-						new EngineThread(
+				agentsThreads.add(
+						new EngineThreads(
+								this.env,
 								List.of(a),
 								numSteps,
-								this.eventsBoard
+                                this.eventsBoard
 						)
 				);
 			}
@@ -105,46 +100,51 @@ public abstract class AbstractSimulation {
 					reminder--;
 				}
 				List<AbstractAgent> agents = this.agents.subList(startIndex, endIndex);
-				engineThreads.add(
-						new EngineThread(
+				agentsThreads.add(
+						new EngineThreads(
+								this.env,
 								agents,
 								numSteps,
-								this.eventsBoard
+                                this.eventsBoard
 						)
 				);
 				assignedAgents += (endIndex - startIndex);
 			}
 		}
 
+		env.init();
+		for (EngineThreads at : agentsThreads) {
+			at.start();
+		}
+
+		long timePerStep = 0;
+		int nSteps = 0;
 		while (nSteps < numSteps) {
 
 			currentWallTime = System.currentTimeMillis();
 
-			/* make a step */
-
 			env.step(dt);
 
-			/*for (var agent: agents) {
-				agent.step(dt);
-			}*/
+			// when env step is over we notify agents to start
+			this.eventsBoard.notifyStepStart(dt);
 
 			t += dt;
-			
-			notifyNewStep(t, agents, env);
 
-			nSteps++;			
+			this.eventsBoard.waitStepEnd();
+			updateView(t, agents, env);
+
+			nSteps++;
 			timePerStep += System.currentTimeMillis() - currentWallTime;
-			
+
 			if (toBeInSyncWithWallTime) {
 				syncWithWallTime();
 			}
-		}	
-		
-		endWallTime = System.currentTimeMillis();
+		}
+
+		this.endWallTime = System.currentTimeMillis();
 		this.averageTimePerStep = timePerStep / numSteps;
-		
 	}
-	
+
 	public long getSimulationDuration() {
 		return endWallTime - startWallTime;
 	}
@@ -185,14 +185,14 @@ public abstract class AbstractSimulation {
 		}
 	}
 
-	private void notifyNewStep(int t, List<AbstractAgent> agents, AbstractEnvironment env) {
+	private void updateView(int t, List<AbstractAgent> agents, AbstractEnvironment env) {
 		for (var l: listeners) {
 			l.notifyStepDone(t, agents, env);
 		}
 	}
 
 	/* method to sync with wall time at a specified step rate */
-	
+
 	private void syncWithWallTime() {
 		try {
 			long newWallTime = System.currentTimeMillis();
@@ -201,6 +201,6 @@ public abstract class AbstractSimulation {
 			if (wallTimeDT < delay) {
 				Thread.sleep(delay - wallTimeDT);
 			}
-		} catch (Exception ex) {}		
+		} catch (Exception ex) {}
 	}
 }
