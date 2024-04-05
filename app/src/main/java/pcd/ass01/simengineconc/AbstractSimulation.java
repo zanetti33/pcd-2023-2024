@@ -141,6 +141,10 @@ public abstract class AbstractSimulation {
 			}
 		}
 
+		for (EngineThreads at : agentsThreads) {
+			at.interrupt();
+		}
+
 		this.endWallTime = System.currentTimeMillis();
 		this.averageTimePerStep = timePerStep / numSteps;
 	}

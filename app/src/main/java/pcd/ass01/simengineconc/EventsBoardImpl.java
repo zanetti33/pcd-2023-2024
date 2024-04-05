@@ -20,11 +20,11 @@ public class EventsBoardImpl implements EventsBoard {
     public EventsBoardImpl(int numSteps, int numberOfThreads) {
         // each latch counts each thread sense/act phase,
         // and we have one latch for each step
-        this.sensePhaseToComplete = Stream.of(new CountDownLatch(numberOfThreads)).limit(numSteps).toList();
-        this.actPhaseToComplete = Stream.of(new CountDownLatch(numberOfThreads)).limit(numSteps).toList();
+        this.sensePhaseToComplete = Stream.generate(() -> new CountDownLatch(numberOfThreads)).limit(numSteps).toList();
+        this.actPhaseToComplete = Stream.generate(() -> new CountDownLatch(numberOfThreads)).limit(numSteps).toList();
         // each latch waits for the environment step,
         // and we have one latch for each step
-        this.environmentStepCompleted = Stream.of(new CountDownLatch(1)).limit(numSteps).toList();
+        this.environmentStepCompleted = Stream.generate(() -> new CountDownLatch(1)).limit(numSteps + 1).toList();
     }
 
     @Override
