@@ -1,7 +1,5 @@
 package pcd.ass01.simengineconc;
 
-import pcd.lab05.monitors.ex_latch.CyclicCountDownLatch;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 
