@@ -125,7 +125,6 @@ public abstract class AbstractSimulation {
 		}
 
 		env.init();
-		log(this.getName(), "Init done");
 		for (EngineThreads at : agentsThreads) {
 			at.start();
 		}
@@ -137,7 +136,6 @@ public abstract class AbstractSimulation {
 			currentWallTime = System.currentTimeMillis();
 
 			env.step(dt);
-			log(this.getName(), "Env step done");
 
 			// when env step is over we notify agents to start and wait their completion
 			eventsBoard.notifyStepStartAndWaitStepEnd(dt);

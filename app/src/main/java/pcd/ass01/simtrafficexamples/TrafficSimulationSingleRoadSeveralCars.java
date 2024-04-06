@@ -7,6 +7,8 @@ import pcd.ass01.simtrafficconc.P2d;
 import pcd.ass01.simtrafficconc.Road;
 import pcd.ass01.simtrafficconc.RoadsEnv;
 
+import java.util.Random;
+
 /**
  * 
  * Traffic Simulation about a number of cars 
@@ -30,15 +32,16 @@ public class TrafficSimulationSingleRoadSeveralCars extends AbstractSimulation {
 
 		int nCars = 30;
 
+		Random gen = new Random();
 		for (int i = 0; i < nCars; i++) {
 			
 			String carId = "car-" + i;
 			// double initialPos = i*30;
 			double initialPos = i*10;
 			
-			double carAcceleration = 1; //  + gen.nextDouble()/2;
-			double carDeceleration = 0.3; //  + gen.nextDouble()/2;
-			double carMaxSpeed = 7; // 4 + gen.nextDouble();
+			double carAcceleration = 1 + gen.nextDouble()/2;
+			double carDeceleration = 0.3 + gen.nextDouble()/2;
+			double carMaxSpeed = 4 + gen.nextDouble();
 						
 			CarAgent car = new CarAgentBasic(carId, env, 
 									road,

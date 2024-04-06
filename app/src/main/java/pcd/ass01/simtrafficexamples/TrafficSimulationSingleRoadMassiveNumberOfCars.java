@@ -7,6 +7,8 @@ import pcd.ass01.simtrafficconc.P2d;
 import pcd.ass01.simtrafficconc.Road;
 import pcd.ass01.simtrafficconc.RoadsEnv;
 
+import java.util.Random;
+
 public class TrafficSimulationSingleRoadMassiveNumberOfCars extends AbstractSimulation {
 
 	private int numCars;
@@ -21,6 +23,7 @@ public class TrafficSimulationSingleRoadMassiveNumberOfCars extends AbstractSimu
 
 		RoadsEnv env = new RoadsEnv();
 		this.setupEnvironment(env);
+		Random gen = new Random();
 		
 		Road road = env.createRoad(new P2d(0,300), new P2d(15000,300));
 
@@ -28,9 +31,9 @@ public class TrafficSimulationSingleRoadMassiveNumberOfCars extends AbstractSimu
 			
 			String carId = "car-" + i;
 			double initialPos = i*10;			
-			double carAcceleration = 1; //  + gen.nextDouble()/2;
-			double carDeceleration = 0.3; //  + gen.nextDouble()/2;
-			double carMaxSpeed = 7; // 4 + gen.nextDouble();
+			double carAcceleration = 1 + gen.nextDouble()/2;
+			double carDeceleration = 0.3 + gen.nextDouble()/2;
+			double carMaxSpeed = 4 + gen.nextDouble();
 						
 			CarAgent car = new CarAgentBasic(carId, env, 
 									road,
