@@ -77,7 +77,7 @@ public abstract class AbstractSimulation {
         /* simulation threads */
         List<EngineThreads> agentsThreads = new ArrayList<>();
 		int numberOfAgents = agents.size();
-		int numberOfProcessors = Runtime.getRuntime().availableProcessors() + 1;
+		int numberOfProcessors = Runtime.getRuntime().availableProcessors();
 		int numberOfThreads;
 		// with less agents than thread we start less thread
 		// (same number as agents) with one agent per thread
@@ -103,10 +103,10 @@ public abstract class AbstractSimulation {
 			numberOfThreads = numberOfProcessors;
 			/* events board */
 			eventsBoard = new EventsBoardImpl(numberOfThreads);
+			int agentsForThread = numberOfAgents / numberOfThreads;
+			int reminder = numberOfAgents % numberOfThreads;
 			for (int i=0; i<numberOfThreads; i++) {
 				int startIndex = assignedAgents;
-				int agentsForThread = numberOfAgents / numberOfThreads;
-				int reminder = numberOfAgents % numberOfThreads;
 				int endIndex = assignedAgents + agentsForThread;
 				if (reminder > 0) {
 					endIndex++;
