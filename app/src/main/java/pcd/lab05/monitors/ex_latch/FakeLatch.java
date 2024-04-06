@@ -8,7 +8,9 @@ public class FakeLatch implements Latch {
 	public FakeLatch() {}
 	
 	@Override
-	public void await() throws InterruptedException {}
+	public synchronized void await() throws InterruptedException {
+
+	}
 
 	@Override
 	public void countDown() {}

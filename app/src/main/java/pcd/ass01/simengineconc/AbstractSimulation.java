@@ -80,7 +80,7 @@ public abstract class AbstractSimulation {
 		if (numberOfAgents < numberOfProcessors) {
 			numberOfThreads = numberOfAgents;
 			/* events board */
-			this.eventsBoard = new EventsBoardImpl(numSteps, numberOfThreads);
+			this.eventsBoard = new EventsBoardImpl(numberOfThreads);
 			for (int i=0; i<numberOfAgents; i++) {
 				agentsThreads.add(
 						new EngineThreads(
@@ -96,7 +96,7 @@ public abstract class AbstractSimulation {
 			int assignedAgents = 0;
 			numberOfThreads = numberOfProcessors;
 			/* events board */
-			this.eventsBoard = new EventsBoardImpl(numSteps, numberOfThreads);
+			this.eventsBoard = new EventsBoardImpl(numberOfThreads);
 			for (int i=0; i<numberOfThreads; i++) {
 				int startIndex = assignedAgents;
 				int agentsForThread = numberOfAgents / numberOfThreads;
@@ -134,10 +134,8 @@ public abstract class AbstractSimulation {
 			env.step(dt);
 			log(this.getName(), "Env step done");
 
-			// when env step is over we notify agents to start
-			this.eventsBoard.notifyStepStart(dt);
-
-			this.eventsBoard.waitStepEnd();
+			// when env step is over we notify agents to start and wait their completion
+			this.eventsBoard.notifyStepStartAndWaitStepEnd(dt);
 
 			t += dt;
 			updateView(t, agents, env);

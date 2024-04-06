@@ -1,83 +1,38 @@
 package pcd.ass01.simengineconc;
 
-import java.util.List;
+import pcd.lab05.monitors.ex_latch.CyclicCountDownLatch;
+
 import java.util.concurrent.CountDownLatch;
-import java.util.stream.Stream;
+import java.util.concurrent.Semaphore;
 
 public class EventsBoardImpl implements EventsBoard {
     /* CountDownLatch for initialization */
     private final CountDownLatch initializeComplete;
-    /* CountDownLatch for each sense step */
-    private final List<CountDownLatch> sensePhaseToComplete;
-    /* CountDownLatch for each act step */
-    private final List<CountDownLatch> actPhaseToComplete;
-    /* Barrier that signals when the next step can take place */
-    private final List<CountDownLatch> environmentStepCompleted;
+    /* CountDownLatch for sense step */
+    private final CyclicCountDownLatch sensePhaseCompleted;
+    /* Semaphore for act step */
+    private final Semaphore stepCompleted;
+    /* Semaphore for environment step  */
+    private final Semaphore environmentPhaseCompleted;
+    private final int numberOfThreads;
     private int currentStep;
     private int currentDt;
 
-    public EventsBoardImpl(int numSteps, int numberOfThreads) {
-        // this latch check for all the agents initialization
+    public EventsBoardImpl(int numberOfThreads) {
+        this.numberOfThreads = numberOfThreads;
+        // this latch checks all the agents initialization
         this.initializeComplete = new CountDownLatch(numberOfThreads);
-        // each latch counts each thread sense/act phase,
-        // and we have one latch for each step
-        this.sensePhaseToComplete = Stream.generate(() -> new CountDownLatch(numberOfThreads)).limit(numSteps + 1).toList();
-        this.actPhaseToComplete = Stream.generate(() -> new CountDownLatch(numberOfThreads)).limit(numSteps).toList();
-        // each latch waits for the environment step,
-        // and we have one latch for each step
-        this.environmentStepCompleted = Stream.generate(() -> new CountDownLatch(1)).limit(numSteps + 1).toList();
-    }
-
-    @Override
-    public void notifyStepStart(int dt) {
-        //System.out.println(" EventsBoard notifyStepStart " + this.currentStep);
-        this.currentDt = dt;
-        this.environmentStepCompleted.get(this.currentStep).countDown();
-    }
-
-    @Override
-    public void notifySenseCompleted() {
-        //System.out.println(" EventsBoard notifySenseCompleted " + this.currentStep);
-        this.sensePhaseToComplete.get(this.currentStep).countDown();
-    }
-
-    @Override
-    public void notifyActCompleted() {
-        this.actPhaseToComplete.get(this.currentStep).countDown();
-    }
-
-    @Override
-    public int waitStepStart() {
-        try {
-            this.environmentStepCompleted.get(this.currentStep).await();
-        } catch (InterruptedException ignored) {}
-        return this.currentDt;
-    }
-
-    @Override
-    public void waitSenseEnd() {
-        //System.out.println(" EventsBoard waitSenseEnd " + this.currentStep);
-        try {
-            this.sensePhaseToComplete.get(this.currentStep).await();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void waitStepEnd() {
-        //System.out.println(" EventsBoard waitStepEnd " + this.currentStep);
-        try {
-            this.actPhaseToComplete.get(this.currentStep).await();
-            this.currentStep++;
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        // this latch checks all the agents sense steps
+        this.sensePhaseCompleted = new CyclicCountDownLatch(numberOfThreads);
+        // this semaphore gives permission to execute the environment step after every agent has completed his
+        // previous act phase
+        this.stepCompleted = new Semaphore(0);
+        // this semaphore gives permission to agents to start their step after environment step
+        this.environmentPhaseCompleted = new Semaphore(0);
     }
 
     @Override
     public void waitInitEnd() {
-        //System.out.println(" EventsBoard waitInitEnd " + this.currentStep);
         try {
             this.initializeComplete.await();
         } catch (InterruptedException e) {
@@ -87,7 +42,47 @@ public class EventsBoardImpl implements EventsBoard {
 
     @Override
     public void notifyInitCompleted() {
-        //System.out.println(" EventsBoard notifyInitCompleted " + this.currentStep);
         this.initializeComplete.countDown();
+    }
+
+    @Override
+    public int waitStepStart() {
+        try {
+            this.environmentPhaseCompleted.acquire();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return this.currentDt;
+    }
+
+    @Override
+    public void notifyStepStartAndWaitStepEnd(int dt) {
+        this.currentDt = dt;
+        this.environmentPhaseCompleted.release(this.numberOfThreads);
+        try {
+            this.stepCompleted.acquire(this.numberOfThreads);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        this.sensePhaseCompleted.reset();
+    }
+
+    @Override
+    public void notifyStepCompleted() {
+        this.stepCompleted.release();
+    }
+
+    @Override
+    public void waitSenseEnd() {
+        try {
+            this.sensePhaseCompleted.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void notifySenseCompleted() {
+        this.sensePhaseCompleted.countDown();
     }
 }

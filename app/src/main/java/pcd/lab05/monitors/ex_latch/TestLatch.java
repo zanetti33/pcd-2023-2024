@@ -7,18 +7,17 @@ public class TestLatch {
 
 	public static void main(String[] args) {
 		
-		int nThreadA = 1;
-		int nThreadB = 10;
+		int nThreadA = 100;
+		int nThreadB = 100;
+
+		Latch latch = new CyclicCountDownLatch(nThreadB);
 		
-		/* this latch is not working */
-		Latch latch = new FakeLatch();
-		
-		List<ThreadA> threadsAlist = new ArrayList<ThreadA>();
+		List<ThreadA> threadsAlist = new ArrayList<>();
 		for (int i = 0; i < nThreadA; i++) {
 			threadsAlist.add(new ThreadA("ThreadA-" + i, latch));
 		}
 
-		List<ThreadB> threadsBlist = new ArrayList<ThreadB>();
+		List<ThreadB> threadsBlist = new ArrayList<>();
 		for (int i = 0; i < nThreadB; i++) {
 			threadsBlist.add(new ThreadB("ThreadB-" + i, latch));
 		}

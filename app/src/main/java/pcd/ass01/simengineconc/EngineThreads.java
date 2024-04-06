@@ -50,7 +50,7 @@ public class EngineThreads extends Thread {
                 a.act(agentsActions.get(i++));
             }
             log(this.getName(), "Act done");
-            this.eventsBoard.notifyActCompleted();
+            this.eventsBoard.notifyStepCompleted();
         }
     }
 }
