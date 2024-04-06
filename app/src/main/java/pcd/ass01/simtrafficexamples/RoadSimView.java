@@ -1,10 +1,6 @@
 package pcd.ass01.simtrafficexamples;
 
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.util.List;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
 
 import pcd.ass01.simengineconc.AbstractAgent;
 import pcd.ass01.simengineconc.AbstractEnvironment;
@@ -30,10 +26,43 @@ public class RoadSimView extends JFrame implements SimulationListener {
 		panel = new RoadSimViewPanel(1500,600); 
 		panel.setSize(1500, 600);
 
+		JPanel stepsPanel = new JPanel();
+		JLabel stepsLabel = new JLabel("Steps:");
+		JTextField stepsTextField = new JTextField(20);
+		stepsPanel.add(stepsLabel);
+		stepsPanel.add(stepsTextField);
+
+		JPanel buttonPanel = new JPanel();
+		JButton startButton = new JButton("Start");
+		JButton stopButton = new JButton("Stop");
+
+		startButton.addActionListener(e -> {
+			String stepsText = stepsTextField.getText();
+			int steps = Integer.parseInt(stepsText);
+			if (steps > 0) {
+				// Fai qualcosa
+				System.out.println("Start: "+steps);
+			}
+		});
+
+		stopButton.addActionListener(e -> {
+			// Ferma tutto
+			System.out.println("Stop!!!");
+		});
+
+		buttonPanel.add(startButton);
+		buttonPanel.add(stopButton);
+
+		JPanel menuPanel = new JPanel();
+		menuPanel.setLayout(new BorderLayout());
+		menuPanel.add(stepsPanel, BorderLayout.WEST);
+		menuPanel.add(buttonPanel, BorderLayout.EAST);
+
 		JPanel cp = new JPanel();
 		LayoutManager layout = new BorderLayout();
 		cp.setLayout(layout);
-		cp.add(BorderLayout.CENTER,panel);
+		cp.add(BorderLayout.CENTER, panel);
+		cp.add(BorderLayout.SOUTH, menuPanel);
 		setContentPane(cp);		
 		
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
