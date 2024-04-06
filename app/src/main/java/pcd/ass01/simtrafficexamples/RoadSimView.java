@@ -4,6 +4,7 @@ import java.util.List;
 
 import pcd.ass01.simengineconc.AbstractAgent;
 import pcd.ass01.simengineconc.AbstractEnvironment;
+import pcd.ass01.simengineconc.AbstractSimulation;
 import pcd.ass01.simengineconc.SimulationListener;
 import pcd.ass01.simtrafficconc.CarAgentInfo;
 import pcd.ass01.simtrafficconc.Road;
@@ -16,11 +17,13 @@ import javax.swing.*;
 
 public class RoadSimView extends JFrame implements SimulationListener {
 
+	private final AbstractSimulation simulation;
 	private RoadSimViewPanel panel;
 	private static final int CAR_DRAW_SIZE = 10;
 	
-	public RoadSimView() {
+	public RoadSimView(AbstractSimulation simulation) {
 		super("RoadSim View");
+		this.simulation = simulation;
 		setSize(1500,600);
 			
 		panel = new RoadSimViewPanel(1500,600); 
@@ -38,16 +41,23 @@ public class RoadSimView extends JFrame implements SimulationListener {
 
 		startButton.addActionListener(e -> {
 			String stepsText = stepsTextField.getText();
-			int steps = Integer.parseInt(stepsText);
+			int steps;
+			try {
+				steps = Integer.parseInt(stepsText);
+			} catch (NumberFormatException exception) {
+				steps = 0;
+			}
 			if (steps > 0) {
 				// Fai qualcosa
-				System.out.println("Start: "+steps);
+				this.simulation.resume(steps);
+			} else {
+				this.simulation.resume();
 			}
 		});
 
 		stopButton.addActionListener(e -> {
 			// Ferma tutto
-			System.out.println("Stop!!!");
+			this.simulation.stop();
 		});
 
 		buttonPanel.add(startButton);

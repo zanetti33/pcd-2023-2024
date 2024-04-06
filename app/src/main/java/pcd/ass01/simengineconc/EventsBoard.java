@@ -5,9 +5,8 @@ public interface EventsBoard {
     void waitInitEnd();
     /* The engine threads notify their initialization completion */
     void notifyInitCompleted();
-
     /* The engine threads wait for the env step to start */
-    int waitStepStart();
+    boolean waitStepStart();
     /* The simulation notify the completion of env step, so that engine threads can start the step and waits
     * for the step completion */
     void notifyStepStartAndWaitStepEnd(int dt);
@@ -17,4 +16,8 @@ public interface EventsBoard {
     void waitSenseEnd();
     /* The engine threads notify the completion of their sense phase */
     void notifySenseCompleted();
+    /* Returns dt for this step execution */
+    int getDt();
+    /* Notify execution end */
+    void notifyEnd();
 }

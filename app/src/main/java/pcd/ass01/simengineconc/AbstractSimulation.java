@@ -16,16 +16,19 @@ public abstract class AbstractSimulation {
 	private AbstractEnvironment env;
 	
 	/* list of the agents */
-	private List<AbstractAgent> agents;
+	private final List<AbstractAgent> agents;
 	
 	/* simulation listeners */
-	private List<SimulationListener> listeners;
+	private final List<SimulationListener> listeners;
 
-	/* simulation threads */
-	private List<EngineThreads> agentsThreads;
+    /* Running monitor */
+	private final SimulationState simulationState = new SimulationState();
 
-	/* event board */
-	private EventsBoard eventsBoard;
+	/* Number of steps monitor */
+	private final SynchCell totalNumberOfSteps = new SynchCell();
+
+	/* number of steps executed */
+	private int nSteps;
 
     /* logical time step */
 	private int dt;
@@ -63,7 +66,7 @@ public abstract class AbstractSimulation {
 	 * @param numSteps
 	 */
 	public void run(int numSteps) {		
-
+		this.totalNumberOfSteps.set(numSteps);
 		startWallTime = System.currentTimeMillis();
 
 		/* initialize the env and the agents inside */
@@ -71,22 +74,25 @@ public abstract class AbstractSimulation {
 
 		this.notifyReset(t, agents, env);
 
-		this.agentsThreads = new ArrayList<>();
+        /* simulation threads */
+        List<EngineThreads> agentsThreads = new ArrayList<>();
 		int numberOfAgents = agents.size();
-		int numberOfProcessors = Runtime.getRuntime().availableProcessors();
+		int numberOfProcessors = Runtime.getRuntime().availableProcessors() + 1;
 		int numberOfThreads;
 		// with less agents than thread we start less thread
 		// (same number as agents) with one agent per thread
-		if (numberOfAgents < numberOfProcessors) {
+        /* event board */
+        EventsBoard eventsBoard;
+        if (numberOfAgents < numberOfProcessors) {
 			numberOfThreads = numberOfAgents;
 			/* events board */
-			this.eventsBoard = new EventsBoardImpl(numberOfThreads);
+			eventsBoard = new EventsBoardImpl(numberOfThreads);
 			for (int i=0; i<numberOfAgents; i++) {
 				agentsThreads.add(
 						new EngineThreads(
 								this.env,
 								agents.subList(i, i+1),
-								this.eventsBoard
+                                eventsBoard
 						)
 				);
 			}
@@ -96,7 +102,7 @@ public abstract class AbstractSimulation {
 			int assignedAgents = 0;
 			numberOfThreads = numberOfProcessors;
 			/* events board */
-			this.eventsBoard = new EventsBoardImpl(numberOfThreads);
+			eventsBoard = new EventsBoardImpl(numberOfThreads);
 			for (int i=0; i<numberOfThreads; i++) {
 				int startIndex = assignedAgents;
 				int agentsForThread = numberOfAgents / numberOfThreads;
@@ -111,7 +117,7 @@ public abstract class AbstractSimulation {
 						new EngineThreads(
 								this.env,
 								agents,
-								this.eventsBoard
+                                eventsBoard
 						)
 				);
 				assignedAgents += (endIndex - startIndex);
@@ -123,11 +129,10 @@ public abstract class AbstractSimulation {
 		for (EngineThreads at : agentsThreads) {
 			at.start();
 		}
-		this.eventsBoard.waitInitEnd();
+		eventsBoard.waitInitEnd();
 
-		long timePerStep = 0;
-		int nSteps = 0;
-		while (nSteps < numSteps) {
+		long totalStepTime = 0;
+		while (nSteps < this.totalNumberOfSteps.get()) {
 
 			currentWallTime = System.currentTimeMillis();
 
@@ -135,25 +140,23 @@ public abstract class AbstractSimulation {
 			log(this.getName(), "Env step done");
 
 			// when env step is over we notify agents to start and wait their completion
-			this.eventsBoard.notifyStepStartAndWaitStepEnd(dt);
+			eventsBoard.notifyStepStartAndWaitStepEnd(dt);
 
 			t += dt;
 			updateView(t, agents, env);
 
 			nSteps++;
-			timePerStep += System.currentTimeMillis() - currentWallTime;
+			totalStepTime += System.currentTimeMillis() - currentWallTime;
 
 			if (toBeInSyncWithWallTime) {
 				syncWithWallTime();
 			}
+			this.simulationState.waitResume();
 		}
-
-		for (EngineThreads at : agentsThreads) {
-			at.interrupt();
-		}
+		eventsBoard.notifyEnd();
 
 		this.endWallTime = System.currentTimeMillis();
-		this.averageTimePerStep = timePerStep / numSteps;
+		this.averageTimePerStep = totalStepTime / this.totalNumberOfSteps.get();
 	}
 
 	private String getName() {
@@ -217,5 +220,19 @@ public abstract class AbstractSimulation {
 				Thread.sleep(delay - wallTimeDT);
 			}
 		} catch (Exception ex) {}
+	}
+
+	public void stop() {
+		this.simulationState.stop();
+	}
+
+	public void resume(int stepsToAdd) {
+		int newTotalSteps = nSteps + stepsToAdd;
+		this.totalNumberOfSteps.set(newTotalSteps);
+		resume();
+	}
+
+	public void resume() {
+		this.simulationState.resume();
 	}
 }

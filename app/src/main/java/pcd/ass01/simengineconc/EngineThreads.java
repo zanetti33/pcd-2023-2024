@@ -27,8 +27,8 @@ public class EngineThreads extends Thread {
         }
         log(this.getName(), "Init done");
         this.eventsBoard.notifyInitCompleted();
-        while (true) {
-            int dt = this.eventsBoard.waitStepStart();
+        while (this.eventsBoard.waitStepStart()) {
+            int dt = this.eventsBoard.getDt();
             // sense for each agent and communicate it to the eventsBoard
             List<Percept> agentsPercepts = new ArrayList<>();
             for (AbstractAgent a : this.agents) {

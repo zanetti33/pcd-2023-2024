@@ -16,7 +16,7 @@ public class RunTrafficSimulation {
 		simulation.setup();
 		
 		RoadSimStatistics stat = new RoadSimStatistics();
-		RoadSimView view = new RoadSimView();
+		RoadSimView view = new RoadSimView(simulation);
 		view.display();
 		
 		simulation.addSimulationListener(stat);

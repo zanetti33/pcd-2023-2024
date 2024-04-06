@@ -13,8 +13,8 @@ public class EventsBoardImpl implements EventsBoard {
     /* Semaphore for environment step  */
     private final Semaphore environmentPhaseCompleted;
     private final int numberOfThreads;
-    private int currentStep;
     private int currentDt;
+    private boolean running = true;
 
     public EventsBoardImpl(int numberOfThreads) {
         this.numberOfThreads = numberOfThreads;
@@ -25,7 +25,7 @@ public class EventsBoardImpl implements EventsBoard {
         // this semaphore gives permission to execute the environment step after every agent has completed his
         // previous act phase
         this.stepCompleted = new Semaphore(0);
-        // this semaphore gives permission to agents to start their step after environment step
+        // this semaphore gives permission to agents to start their step after environment step or to end
         this.environmentPhaseCompleted = new Semaphore(0);
     }
 
@@ -44,13 +44,13 @@ public class EventsBoardImpl implements EventsBoard {
     }
 
     @Override
-    public int waitStepStart() {
+    public boolean waitStepStart() {
         try {
             this.environmentPhaseCompleted.acquire();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        return this.currentDt;
+        return this.running;
     }
 
     @Override
@@ -82,5 +82,16 @@ public class EventsBoardImpl implements EventsBoard {
     @Override
     public void notifySenseCompleted() {
         this.sensePhaseCompleted.countDown();
+    }
+
+    @Override
+    public int getDt() {
+        return this.currentDt;
+    }
+
+    @Override
+    public void notifyEnd() {
+        this.running = false;
+        this.environmentPhaseCompleted.release(this.numberOfThreads);
     }
 }
