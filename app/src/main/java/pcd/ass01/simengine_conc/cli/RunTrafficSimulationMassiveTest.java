@@ -9,8 +9,10 @@ public class RunTrafficSimulationMassiveTest {
 
 		int numCars = 5000;
 		int nSteps = 100;
-		
+		int nWorkers = Runtime.getRuntime().availableProcessors() + 1;
+
 		var simulation = new TrafficSimulationSingleRoadMassiveNumberOfCars(numCars);
+		simulation.configureNumWorkers(nWorkers);
 		simulation.setup();
 		
 		/*
