@@ -29,7 +29,7 @@ public class WorkerAgent extends Thread {
 				canDoStep.await();
 				
 				if (!stopFlag.isSet()) {
-				
+
 					/* moving on agents */
 					for (var ag: assignedSimAgents) {
 						ag.step(dt);
