@@ -7,7 +7,7 @@ public class RunTrafficSimulationMassiveTest {
 
 	public static void main(String[] args) {		
 
-		int numCars = 5004;
+		int numCars = 10000;
 		int nSteps = 100;
 		int nWorkers = Runtime.getRuntime().availableProcessors() + 1;
 

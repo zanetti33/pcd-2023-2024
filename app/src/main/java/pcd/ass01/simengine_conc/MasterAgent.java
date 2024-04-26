@@ -79,6 +79,7 @@ public class MasterAgent extends Thread {
 		workers.add(worker);
 		 */
 
+		/*
 		int nAssignedAgentsPerWorker = simAgents.size()/nWorkers;
 
 		int index = 0;
@@ -98,6 +99,7 @@ public class MasterAgent extends Thread {
 			index++;
 		}
 		agentGroups.add(assignedSimAgents);
+		 */
 
 		log("starting the simulation loop.");
 
@@ -116,11 +118,8 @@ public class MasterAgent extends Thread {
 				/* wait for workers to complete */
 				//jobDone.await();
 				List<Future<?>> tasks = new ArrayList<>();
-				index = 0;
-				for (List<AbstractAgent> group : agentGroups) {
-					String id = index + " in step " + t;
-					tasks.add(executorService.submit(() -> executeStepForAgents(id, group, dt)));
-					index++;
+				for (AbstractAgent agent : simAgents) {
+					tasks.add(executorService.submit(() -> agent.step(dt)));
 				}
 				for (Future<?> task : tasks) {
 					task.get();
@@ -149,14 +148,6 @@ public class MasterAgent extends Thread {
 		canDoStep.trig();
 
 		done.release();
-	}
-
-	private void executeStepForAgents(String id, List<AbstractAgent> assignedSimAgents, int dt) {
-		/* moving on agents */
-		System.out.println(" [Task " + id + "] step of " + assignedSimAgents.size() + " agents");
-		for (var ag: assignedSimAgents) {
-			ag.step(dt);
-		}
 	}
 
 	private void syncWithTime(int nStepsPerSec) {
